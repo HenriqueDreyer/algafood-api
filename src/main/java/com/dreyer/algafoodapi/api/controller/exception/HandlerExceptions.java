@@ -7,6 +7,8 @@
  */
 package com.dreyer.algafoodapi.api.controller.exception;
 
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -63,12 +65,20 @@ public class HandlerExceptions extends ResponseEntityExceptionHandler {
 	}
 		
 	public ResponseEntity<Object> handleInvalidFormatException(InvalidFormatException ex,
-			HttpHeaders headers, HttpStatus status, WebRequest request) {		
+			HttpHeaders headers, HttpStatus status, WebRequest request) {	
+		
+		String path = ex.getPath().stream()
+				.map(ref -> ref.getFieldName())
+				.collect(Collectors.joining("."));
+		
+		String detail = String.format("A propriedade '%s' recebeu o valor '%s', "
+				+ "que é de um tipo inválido. Corrija e informe um valor compatível com o tipo %s.",
+				path, ex.getValue(), ex.getTargetType().getSimpleName());
 		
 		StandardErrorSpring standardErrorSpring = createStandardError(status, ex)
 				.status(status.value())
 				.title(status.name())
-				.detail(ex.getMessage())
+				.detail(detail)
 				.build();
 		
 		return handleExceptionInternal(ex, standardErrorSpring, headers, status, request);
